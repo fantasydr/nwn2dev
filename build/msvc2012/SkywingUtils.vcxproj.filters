@@ -1,0 +1,76 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Build">
+      <UniqueIdentifier>{6c070791-dd32-4ac0-9d1e-d6415c73f9ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Encoding">
+      <UniqueIdentifier>{33eb16ec-2b3b-442b-99c9-3f70b0a4d9e2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="BufferParser">
+      <UniqueIdentifier>{14c9b596-4cb4-4497-a10c-82fa552058d4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Ref">
+      <UniqueIdentifier>{3ca30db7-d38f-4486-9b0a-2de020b94049}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Timer">
+      <UniqueIdentifier>{faace570-a90d-4ff6-b0f3-d768901914d3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Synchronization">
+      <UniqueIdentifier>{a6bd528b-a7d7-48b6-9686-ebbfe3900f94}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\SkywingUtils\Build\BufferParser.cpp">
+      <Filter>Build</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\SkywingUtils\Build\CharsetConv.cpp">
+      <Filter>Build</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\SkywingUtils\Build\TimerManager.cpp">
+      <Filter>Build</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\SkywingUtils\Precomp.cpp" />
+    <ClCompile Include="..\..\SkywingUtils\Encoding\CharsetConv.cpp">
+      <Filter>Encoding</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\SkywingUtils\Parsers\BufferParser.cpp">
+      <Filter>BufferParser</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\SkywingUtils\Timer\TimerManager.cpp">
+      <Filter>Timer</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\SkywingUtils\Build\Precomp.h">
+      <Filter>Build</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\SkywingUtils\Precomp.h" />
+    <ClInclude Include="..\..\SkywingUtils\SkywingUtils.h" />
+    <ClInclude Include="..\..\SkywingUtils\UtilsInternal.h" />
+    <ClInclude Include="..\..\SkywingUtils\Encoding\CharsetConv.h">
+      <Filter>Encoding</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\SkywingUtils\Encoding\Encoding.h">
+      <Filter>Encoding</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\SkywingUtils\Parsers\BufferParser.h">
+      <Filter>BufferParser</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\SkywingUtils\Ref\Ref.h">
+      <Filter>Ref</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\SkywingUtils\Synchronization\ListAPI.h">
+      <Filter>Synchronization</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\SkywingUtils\Timer\TimerManager.h">
+      <Filter>Timer</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\SkywingUtils\Build\sources">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="..\..\SkywingUtils\dirs" />
+  </ItemGroup>
+</Project>

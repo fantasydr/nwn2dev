@@ -1,0 +1,62 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NWN2DataLib", "NWN2DataLib.vcxproj", "{D715BFFE-5A9B-4310-A50D-0C674A5B7D08}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UpdateModTemplates", "UpdateModTemplates.vcxproj", "{56FAD4FB-C762-4275-AC3E-B3A40AB53F91}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Granny2Lib", "Granny2Lib.vcxproj", "{714FAC17-FD67-44B2-A794-F64936FEE5E6}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "minizip", "minizip.vcxproj", "{EF64A328-557F-448A-8BBF-5FF010FD8B0C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NWN2MathLib", "NWN2MathLib.vcxproj", "{88322A66-51FD-4B5B-8EF5-A38D1AE7DDCA}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NWNBaseLib", "NWNBaseLib.vcxproj", "{7AF18829-A8C5-4318-BE21-1DB7E194BD0E}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SkywingUtils", "SkywingUtils.vcxproj", "{679E3FB9-3338-4B0A-87D4-369D6C60C7DC}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "zlib", "zlib.vcxproj", "{7F97649D-A160-4824-BA5D-B538D5CAE372}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D715BFFE-5A9B-4310-A50D-0C674A5B7D08}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D715BFFE-5A9B-4310-A50D-0C674A5B7D08}.Debug|Win32.Build.0 = Debug|Win32
+		{D715BFFE-5A9B-4310-A50D-0C674A5B7D08}.Release|Win32.ActiveCfg = Release|Win32
+		{D715BFFE-5A9B-4310-A50D-0C674A5B7D08}.Release|Win32.Build.0 = Release|Win32
+		{56FAD4FB-C762-4275-AC3E-B3A40AB53F91}.Debug|Win32.ActiveCfg = Debug|Win32
+		{56FAD4FB-C762-4275-AC3E-B3A40AB53F91}.Debug|Win32.Build.0 = Debug|Win32
+		{56FAD4FB-C762-4275-AC3E-B3A40AB53F91}.Release|Win32.ActiveCfg = Release|Win32
+		{56FAD4FB-C762-4275-AC3E-B3A40AB53F91}.Release|Win32.Build.0 = Release|Win32
+		{714FAC17-FD67-44B2-A794-F64936FEE5E6}.Debug|Win32.ActiveCfg = Debug|Win32
+		{714FAC17-FD67-44B2-A794-F64936FEE5E6}.Debug|Win32.Build.0 = Debug|Win32
+		{714FAC17-FD67-44B2-A794-F64936FEE5E6}.Release|Win32.ActiveCfg = Release|Win32
+		{714FAC17-FD67-44B2-A794-F64936FEE5E6}.Release|Win32.Build.0 = Release|Win32
+		{EF64A328-557F-448A-8BBF-5FF010FD8B0C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{EF64A328-557F-448A-8BBF-5FF010FD8B0C}.Debug|Win32.Build.0 = Debug|Win32
+		{EF64A328-557F-448A-8BBF-5FF010FD8B0C}.Release|Win32.ActiveCfg = Release|Win32
+		{EF64A328-557F-448A-8BBF-5FF010FD8B0C}.Release|Win32.Build.0 = Release|Win32
+		{88322A66-51FD-4B5B-8EF5-A38D1AE7DDCA}.Debug|Win32.ActiveCfg = Debug|Win32
+		{88322A66-51FD-4B5B-8EF5-A38D1AE7DDCA}.Debug|Win32.Build.0 = Debug|Win32
+		{88322A66-51FD-4B5B-8EF5-A38D1AE7DDCA}.Release|Win32.ActiveCfg = Release|Win32
+		{88322A66-51FD-4B5B-8EF5-A38D1AE7DDCA}.Release|Win32.Build.0 = Release|Win32
+		{7AF18829-A8C5-4318-BE21-1DB7E194BD0E}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7AF18829-A8C5-4318-BE21-1DB7E194BD0E}.Debug|Win32.Build.0 = Debug|Win32
+		{7AF18829-A8C5-4318-BE21-1DB7E194BD0E}.Release|Win32.ActiveCfg = Release|Win32
+		{7AF18829-A8C5-4318-BE21-1DB7E194BD0E}.Release|Win32.Build.0 = Release|Win32
+		{679E3FB9-3338-4B0A-87D4-369D6C60C7DC}.Debug|Win32.ActiveCfg = Debug|Win32
+		{679E3FB9-3338-4B0A-87D4-369D6C60C7DC}.Debug|Win32.Build.0 = Debug|Win32
+		{679E3FB9-3338-4B0A-87D4-369D6C60C7DC}.Release|Win32.ActiveCfg = Release|Win32
+		{679E3FB9-3338-4B0A-87D4-369D6C60C7DC}.Release|Win32.Build.0 = Release|Win32
+		{7F97649D-A160-4824-BA5D-B538D5CAE372}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7F97649D-A160-4824-BA5D-B538D5CAE372}.Debug|Win32.Build.0 = Debug|Win32
+		{7F97649D-A160-4824-BA5D-B538D5CAE372}.Release|Win32.ActiveCfg = Release|Win32
+		{7F97649D-A160-4824-BA5D-B538D5CAE372}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
