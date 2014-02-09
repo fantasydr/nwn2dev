@@ -127,12 +127,13 @@ public:
 
 	--*/
 	{
-		HANDLE console = GetStdHandle( STD_OUTPUT_HANDLE );
-		char buf[8193];
-		StringCbVPrintfA(buf, sizeof( buf ), fmt, argptr);
-		DWORD n = (DWORD)strlen(buf);
-		SetConsoleTextAttribute( console, Attributes );
-		WriteConsoleA(console, buf, n, &n, 0);
+		vprintf(fmt, argptr);
+		//HANDLE console = GetStdHandle( STD_OUTPUT_HANDLE );
+		//char buf[8193];
+		//StringCbVPrintfA(buf, sizeof( buf ), fmt, argptr);
+		//DWORD n = (DWORD)strlen(buf);
+		//SetConsoleTextAttribute( console, Attributes );
+		//WriteConsoleA(console, buf, n, &n, 0);
 	}
 
 };
@@ -164,6 +165,8 @@ static const ObjectTypeDescriptor ValidObjectTypes[ ] =
 
 static const size_t NumValidObjectTypes = sizeof( ValidObjectTypes ) / sizeof( ValidObjectTypes[ 0 ] );
 
+static bool DryRun = true;
+
 typedef std::vector< std::string > StringVec;
 
 void
@@ -172,6 +175,7 @@ UpdateObjectInstanceFromTemplate(
 	__in const GffFileReader::GffStruct * ObjStructIn,
 	__inout GffFileWriter::GffStruct * ObjStructOut,
 	__in const StringVec & ExcludeFields,
+    __in const StringVec & IncludeFields,
 	__in IDebugTextOut * TextOut
 	)
 /*++
@@ -219,6 +223,8 @@ Environment:
 	//       fields to be completely replaced with the data from the template !
 	//
 
+    bool OutputField = false;
+
 	for (GffFileReader::FIELD_INDEX FieldIdx = 0;
 	     FieldIdx < TemplateStruct->GetFieldCount( );
 	     FieldIdx += 1)
@@ -233,13 +239,23 @@ Environment:
 		// If we are to exclude this field from updating, then do so now.
 		//
 
-		if (std::find(
+		if (!ExcludeFields.empty() &&
+            std::find(
 			ExcludeFields.begin( ),
 			ExcludeFields.end( ),
 			FieldName ) != ExcludeFields.end( ))
 		{
 			continue;
 		}
+
+        if (!IncludeFields.empty() &&
+            std::find(
+            IncludeFields.begin( ),
+            IncludeFields.end( ),
+            FieldName ) == IncludeFields.end( ))
+        {
+            continue;
+        }
 
 		//
 		// Don't copy fields which are present in the template but -not- the
@@ -250,14 +266,37 @@ Environment:
 		if (!ObjStructIn->GetFieldType( FieldName.c_str( ), FieldType ))
 			continue;
 
+        if(GffFileReader::GFF_CEXOLOCSTRING == FieldType)
+        {
+            std::string FieldData;
+            ObjStructIn->GetCExoLocString( FieldName.c_str( ), FieldData);
+            if(!FieldData.empty())
+            {
+                if(!OutputField)
+                {
+                    OutputField = true;
+                    TextOut->WriteText("[OUTPUT_FIELD]\n");
+                }
+                TextOut->WriteText("[GFF_CEXOLOCSTRING],%s,~%s~\n", FieldName.c_str( ), FieldData.c_str( ));
+            }
+        }
+
 		//
 		// Delete the original field contents of this field and replace them with
 		// those from the template.
 		//
 
-		ObjStructOut->DeleteField( FieldName.c_str( ) );
-		ObjStructOut->CopyField( TemplateStruct, FieldIdx );
+        if(!DryRun)
+        {
+			ObjStructOut->DeleteField( FieldName.c_str( ) );
+			ObjStructOut->CopyField( TemplateStruct, FieldIdx );
+        }
 	}
+
+    if(OutputField)
+    {
+        TextOut->WriteText("[/OUTPUT_FIELD]\n");
+    }
 }
 
 void
@@ -267,7 +306,8 @@ ProcessArea(
 	__in IDebugTextOut * TextOut,
 	__in unsigned long ObjectTypeMask,
 	__in const StringVec & TemplateNames,
-	__in const StringVec & ExcludeFields
+	__in const StringVec & ExcludeFields,
+    __in const StringVec & IncludeFields
 	)
 /*++
 
@@ -350,7 +390,7 @@ Environment:
 
 	for (size_t i = 0; i < NumValidObjectTypes; i += 1)
 	{
-		if (!(ObjectTypeMask & (1 << ValidObjectTypes[ i ].TypeCode )))
+		if (ObjectTypeMask > 0 && !(ObjectTypeMask & (1 << ValidObjectTypes[ i ].TypeCode )))
 			continue;
 
 		//
@@ -388,7 +428,7 @@ Environment:
 				continue;
 
 			TemplateString   = ResMan.StrFromResRef( TemplateResRef );
-			MatchingTemplate = false;
+			MatchingTemplate = TemplateNames.empty(); // if empty then ignore filter
 
 			for (StringVec::const_iterator it = TemplateNames.begin( );
 			     it != TemplateNames.end( );
@@ -468,6 +508,7 @@ Environment:
 					&ObjStructIn,
 					&ObjStructOut,
 					ExcludeFields,
+                    IncludeFields,
 					TextOut);
 			}
 			catch (std::exception &e)
@@ -759,6 +800,7 @@ Environment:
 	const char    * InstallDir;
 	StringVec       TemplateNames;
 	StringVec       ExcludeFields;
+    StringVec       IncludeFields;
 	unsigned long   ObjectTypeMask;
 	bool            Erf16;
 
@@ -784,8 +826,12 @@ Environment:
 			TemplateNames.push_back( argv[ ++i ] );
 		else if ((!_stricmp( argv[ i ], "-excludefield" )) && (i + 1 < argc))
 			ExcludeFields.push_back( argv[ ++i ] );
+		else if ((!_stricmp( argv[ i ], "-includefield" )) && (i + 1 < argc))
+			IncludeFields.push_back( argv[ ++i ] );
 		else if ((!_stricmp( argv[ i ], "-nwn1")))
 			Erf16 = true;
+		else if ((!_stricmp( argv[ i ], "-save")))
+			DryRun = false;
 		else if ((!_stricmp( argv[ i ], "-objecttype" )) && (i + 1 < argc))
 		{
 			bool FoundIt;
@@ -842,19 +888,19 @@ Environment:
 		return -1;
 	}
 
-	if (ObjectTypeMask == 0)
-	{
-		PrintUsage( );
-		printf( "\nYou must specify at least one object type to match (with -objecttype <typename>).\n" );
-		return -1;
-	}
+	//if (ObjectTypeMask == 0)
+	//{
+	//	PrintUsage( );
+	//	printf( "\nYou must specify at least one object type to match (with -objecttype <typename>).\n" );
+	//	return -1;
+	//}
 
-	if (TemplateNames.empty( ))
-	{
-		PrintUsage( );
-		printf( "\nYou must specify at least one template RESREF (no extension) to match (with -template <resref>).\n" );
-		return -1;
-	}
+	//if (TemplateNames.empty( ))
+	//{
+	//	PrintUsage( );
+	//	printf( "\nYou must specify at least one template RESREF (no extension) to match (with -template <resref>).\n" );
+	//	return -1;
+	//}
 	
 	//
 	// Now spin up a resource manager instance.
@@ -910,7 +956,8 @@ Environment:
 				&TextOut,
 				ObjectTypeMask,
 				TemplateNames,
-				ExcludeFields);
+				ExcludeFields,
+                IncludeFields);
 		}
 
 		TextOut.WriteText( "Finished processing module.\n" );
