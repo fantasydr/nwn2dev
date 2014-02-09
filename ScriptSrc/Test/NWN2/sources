@@ -1,0 +1,20 @@
+TARGETNAME=NWN2_ScriptSrc
+TARGETTYPE=NOTARGET
+SOURCES=
+
+TARGET_DESTINATION=release
+
+BUILD_NO_SYMCHK=1
+
+NSS_OBJECTS=                                                   \
+            $(OBJ_PATH)\$O\gui_test_badcodegen_do_switch.ncs   \
+            $(OBJ_PATH)\$O\gui_test_badcodegen_neststructs.ncs \
+            $(OBJ_PATH)\$O\gui_test_forcefollowobject.ncs      \
+            $(OBJ_PATH)\$O\gui_test_intrinsics.ncs             \
+            $(OBJ_PATH)\$O\gui_test_objectattributes.ncs       \
+            $(OBJ_PATH)\$O\gui_test_opengui.ncs                \
+            $(OBJ_PATH)\$O\gui_test_timer.ncs                  \
+
+NTTARGETFILE0=$(OBJ_PATH)\$O\ScriptSrc
+PASS1_BINPLACE=/:DEST $(TARGET_DESTINATION)\TestScripts        \
+              $(NSS_OBJECTS) $(NSS_OBJECTS:.ncs=.ndb)
