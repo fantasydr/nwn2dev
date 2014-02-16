@@ -21,6 +21,135 @@ Abstract:
 #include "../NWN2DataLib/ResourceManager.h"
 #include "../NWN2DataLib/GffFileWriter.h"
 
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <map>
+typedef std::map<unsigned int, std::string> StringTable;
+typedef std::hash_map<std::string, unsigned int> StringTableRev;
+
+class StringTableLoader
+{
+private:
+
+    StringTable _origin;
+    StringTableRev _origin_rev;
+    unsigned int _max_id;
+
+    void PushString( std::stringstream &ss, const char splitter, unsigned int index ) 
+    {
+        std::string result = ss.str();
+        int splitter_pos = result.find_last_of(splitter);
+        PushString(index, splitter_pos < 0 ? result : result.substr(0, splitter_pos));
+
+        ss.str(std::string());
+    }
+
+    unsigned int PushString(unsigned int index, const std::string& content)
+    {
+        StringTable::iterator ot = _origin.find(index);
+        if(ot != _origin.end())
+            throw std::runtime_error( "String ID conflict." );
+
+        StringTableRev::iterator otr = _origin_rev.find(content);
+        if(otr != _origin_rev.end())
+            return otr->second; // duplicated string
+
+        // got unique string
+        _origin[index] = content;
+        _origin_rev[content] = index;
+
+        if(_max_id < index)
+            _max_id = index;
+
+        return index;
+    }
+
+public:
+
+    static const unsigned int CUSTOM_BASE = 0x1000000;
+    static const unsigned int INDEX_INVALID = 0xFFFFFFFF;
+
+    StringTableLoader()
+        :_max_id(0)
+    {}
+
+    unsigned int GetMaxID() const { return _max_id; }
+
+    unsigned int PushString(const std::string& content)
+    {
+        return PushString(GetMaxID()+1, content);
+    }
+
+    void Save(const char* filename)
+    {
+        const std::string header("String #");
+        const std::string header_next(" is ");
+        const char splitter = '~';
+
+        if(_origin.empty())
+            return;
+
+        std::ofstream  fin(filename);
+
+        fin << "// Total:" << _origin.size() << std::endl;
+        StringTable::iterator itr = _origin.begin();
+        for(;itr!=_origin.end();itr++)
+        {
+            fin << header << itr->first << header_next << splitter
+                << itr->second << splitter << std::endl;
+        }
+    }
+
+    unsigned int Load(const char* filename)
+    {
+        _origin.clear();
+        _origin_rev.clear();
+        _max_id = 0;
+
+        const std::string header("String #");
+        const std::string header_next(" is ");
+        const char splitter = '~';
+
+        std::ifstream  fin(filename);
+        std::string    line;
+
+        unsigned int index = INDEX_INVALID;
+        std::string content;
+        std::stringstream ss(content);
+        while(std::getline(fin, line))
+        {
+            //not including the \n 
+            if( line.length() >= header.length() &&
+                line.substr(0, header.length()) == header)
+            {
+                if(index != INDEX_INVALID)
+                {
+                    PushString(ss, splitter, index);
+                }
+
+                int pos = line.find_first_of(splitter);
+                std::string index_str = line.substr(header.length(), pos - header_next.length() - header.length());
+                index = atoi(index_str.c_str());
+
+                ss << line.substr(pos + 1);
+            }
+            else if(index != INDEX_INVALID)
+            {
+                ss << std::endl;
+                ss << line;
+            }
+        }
+
+        if(index != INDEX_INVALID)
+        {
+            PushString(ss, splitter, index);
+        }
+
+        return _max_id;
+    }
+};
+
 //
 // Define the debug text output interface, used to write debug or log messages
 // to the user.
@@ -166,8 +295,90 @@ static const ObjectTypeDescriptor ValidObjectTypes[ ] =
 static const size_t NumValidObjectTypes = sizeof( ValidObjectTypes ) / sizeof( ValidObjectTypes[ 0 ] );
 
 static bool DryRun = true;
+static bool ExportCustom = false;
+static StringTableLoader CustomStringTable;
 
 typedef std::vector< std::string > StringVec;
+
+void ExportStringField( __in const GffFileReader::GffStruct &StructIn, 
+                        __in const char * FieldName, 
+                        __in IDebugTextOut * TextOut, 
+                        __inout GffFileWriter::GffStruct &StructOut )
+{
+    std::string ListFieldData;
+    StructIn.GetCExoLocString( FieldName, ListFieldData);
+    if(!ListFieldData.empty())
+    {
+        GffFileReader::GFF_CEXOLOCSTRING_ENTRY LocString;
+        StructIn.GetCExoLocStringRef( FieldName, LocString);
+
+        TextOut->WriteText("[OUTPUT_FIELD]\n");
+        if(LocString.StringCount > 0)
+        {
+            if(LocString.StringRef != StringTableLoader::INDEX_INVALID)
+            {
+                TextOut->WriteText("[EMBEDDED_STRING_WITH_REF]%d\n", LocString.StringRef);
+            }
+            unsigned int index = CustomStringTable.PushString(ListFieldData.c_str( ));
+            TextOut->WriteText("[CUSTOM_INDEX]%d\n", index);
+
+            if(ExportCustom)
+            {
+                StructOut.DeleteField( FieldName );
+                StructOut.SetCExoLocStringRef( FieldName, StringTableLoader::CUSTOM_BASE + index);
+            }
+        }
+        TextOut->WriteText("[GFF_CEXOLOCSTRING],%s,~%s~\n", FieldName, ListFieldData.c_str( ));
+        TextOut->WriteText("[/OUTPUT_FIELD]\n");
+    }
+}
+
+void UpdateListField( __in const GffFileReader::GffStruct * Struct, 
+                      __in GffFileWriter::GffStruct * StructOut, 
+                      __in const char * FieldName, 
+                      __in IDebugTextOut * TextOut, 
+                      __in int Deep ) 
+{
+    GffFileReader::GffStruct ListStruct;
+    GffFileWriter::GffStruct ListStructOut;
+
+    for (size_t ListIndex = 0; ListIndex <= ULONG_MAX; ListIndex+= 1)
+    {
+        if (!Struct->GetListElement(FieldName, ListIndex, ListStruct))
+        {
+            break;
+        }
+
+        if (!StructOut->GetListElement(FieldName, ListIndex, ListStructOut))
+        {
+            throw std::runtime_error( "Internal error: GFF List reader/writer out of sync." );
+        }
+
+        for (GffFileReader::FIELD_INDEX ListFieldIdx = 0; ListFieldIdx < ListStruct.GetFieldCount( ); ListFieldIdx += 1)
+        {
+            GffFileReader::GFF_FIELD_TYPE ListFieldType;
+            std::string                   ListFieldName;
+
+            if (!ListStruct.GetFieldName( ListFieldIdx, ListFieldName ))
+                throw std::runtime_error( "GetFieldName failed on Struct." );
+
+            if (!ListStruct.GetFieldType( ListFieldName.c_str( ), ListFieldType ))
+                continue;
+
+            for(int i=0;i<Deep;i++) TextOut->WriteText(" ");
+            TextOut->WriteText("[LIST_FIELD],%d,%s\n", ListFieldType, ListFieldName.c_str( ));
+
+            if(GffFileReader::GFF_LIST == ListFieldType && Deep < 32)
+            {
+                UpdateListField(&ListStruct, &ListStructOut, ListFieldName.c_str( ), TextOut, Deep + 1);
+            }
+            else if(GffFileReader::GFF_CEXOLOCSTRING == ListFieldType)
+            {
+                ExportStringField(ListStruct, ListFieldName.c_str(), TextOut, ListStructOut);
+            }
+        }
+    }
+}
 
 void
 UpdateObjectInstanceFromTemplate(
@@ -223,8 +434,6 @@ Environment:
 	//       fields to be completely replaced with the data from the template !
 	//
 
-    bool OutputField = false;
-
 	for (GffFileReader::FIELD_INDEX FieldIdx = 0;
 	     FieldIdx < TemplateStruct->GetFieldCount( );
 	     FieldIdx += 1)
@@ -266,19 +475,15 @@ Environment:
 		if (!ObjStructIn->GetFieldType( FieldName.c_str( ), FieldType ))
 			continue;
 
-        if(GffFileReader::GFF_CEXOLOCSTRING == FieldType)
+        TextOut->WriteText("[FIELD],%d,%s\n", FieldType, FieldName.c_str( ));
+
+        if(GffFileReader::GFF_LIST == FieldType)
         {
-            std::string FieldData;
-            ObjStructIn->GetCExoLocString( FieldName.c_str( ), FieldData);
-            if(!FieldData.empty())
-            {
-                if(!OutputField)
-                {
-                    OutputField = true;
-                    TextOut->WriteText("[OUTPUT_FIELD]\n");
-                }
-                TextOut->WriteText("[GFF_CEXOLOCSTRING],%s,~%s~\n", FieldName.c_str( ), FieldData.c_str( ));
-            }
+            UpdateListField(ObjStructIn, ObjStructOut, FieldName.c_str( ), TextOut, 0);
+        }
+        else if(GffFileReader::GFF_CEXOLOCSTRING == FieldType)
+        {
+            ExportStringField(*ObjStructIn, FieldName.c_str(), TextOut, *ObjStructOut);
         }
 
 		//
@@ -286,17 +491,12 @@ Environment:
 		// those from the template.
 		//
 
-        if(!DryRun)
+        if(!DryRun && !ExportCustom)
         {
 			ObjStructOut->DeleteField( FieldName.c_str( ) );
 			ObjStructOut->CopyField( TemplateStruct, FieldIdx );
         }
 	}
-
-    if(OutputField)
-    {
-        TextOut->WriteText("[/OUTPUT_FIELD]\n");
-    }
 }
 
 void
@@ -803,6 +1003,8 @@ Environment:
     StringVec       IncludeFields;
 	unsigned long   ObjectTypeMask;
 	bool            Erf16;
+    const char    * CustomInput = NULL;
+    const char    * CustomOutput = NULL;
 
 	ModuleName     = NULL;
 	NWN2Home       = NULL;
@@ -832,6 +1034,12 @@ Environment:
 			Erf16 = true;
 		else if ((!_stricmp( argv[ i ], "-save")))
 			DryRun = false;
+        else if ((!_stricmp( argv[ i ], "-export")))
+            ExportCustom = true;
+        else if ((!_stricmp( argv[ i ], "-custominput" )) && (i + 1 < argc))
+            CustomInput = argv[ ++i ];
+        else if ((!_stricmp( argv[ i ], "-customoutput" )) && (i + 1 < argc))
+            CustomOutput = argv[ ++i ];
 		else if ((!_stricmp( argv[ i ], "-objecttype" )) && (i + 1 < argc))
 		{
 			bool FoundIt;
@@ -909,6 +1117,13 @@ Environment:
 	PrintfTextOut   TextOut;
 	ResourceManager ResMan( &TextOut );
 
+    if(CustomInput)
+    {
+        TextOut.WriteText( "Load Custom StringTable...\n" );
+        CustomStringTable.Load(CustomInput);
+        TextOut.WriteText( "Custom StringTable end with %d.\n", CustomStringTable.GetMaxID() );
+    }
+
 	try
 	{
 		//
@@ -971,6 +1186,12 @@ Environment:
 
 		TextOut.WriteText( "ERROR: Exception '%s'.\n", e.what( ) );
 	}
+
+    if(CustomOutput)
+    {
+        TextOut.WriteText( "Save Custom StringTable.\n" );
+        CustomStringTable.Save(CustomOutput);
+    }
 
 	//
 	// All done.

@@ -1575,6 +1575,23 @@ Environment:
 }
 
 bool
+	GffFileReader::GffStruct::GetCExoLocStringRef(
+	__in const char * FieldName,
+	__out GffFileReader::GFF_CEXOLOCSTRING_ENTRY & LocString
+	) const
+{
+	GFF_FIELD_ENTRY         FieldEntry;
+
+	if (!GetFieldByName( FieldName, FieldEntry ))
+		return false;
+
+	if (FieldEntry.Type != GFF_CEXOLOCSTRING)
+		return false;
+
+	return !GetLargeFieldData( FieldEntry, &LocString, sizeof( LocString ), 0 );
+}
+
+bool
 GffFileReader::GffStruct::GetCExoLocString(
 	__in const char * FieldName,
 	__out std::string & Data

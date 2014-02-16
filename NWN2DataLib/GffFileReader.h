@@ -580,6 +580,12 @@ public:
 			) const;
 
 		bool
+			GetCExoLocStringRef(
+			__in const char * FieldName,
+			__out GFF_CEXOLOCSTRING_ENTRY & LocString
+			) const;
+
+		bool
 		GetVOID(
 			__in const char * FieldName,
 			__out std::vector< unsigned char > & Data

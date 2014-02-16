@@ -749,6 +749,35 @@ public:
 		//
 
 		inline
+			void
+			SetCExoLocStringRef(
+			__in const char * FieldName,
+			__in unsigned long refId
+			)
+		{
+			std::vector< unsigned char > RawData;
+			GFF_CEXOLOCSTRING_ENTRY      LocStr;
+			const size_t                 HeaderSize = sizeof( LocStr );
+
+			C_ASSERT( HeaderSize == 12 );
+
+			RawData.resize( HeaderSize );
+
+			LocStr.Length      = HeaderSize - 4;
+			LocStr.StringRef   = refId;
+			LocStr.StringCount = 0;
+
+			memcpy( &RawData[ 0 ], &LocStr, sizeof( LocStr ) );
+			
+			SetComplexFieldByName( GffFileReader::GFF_CEXOLOCSTRING, FieldName, RawData );
+		}
+
+		//
+		// Note that this SetCExoLocString override creates a single localized
+		// string, gender male, with the writer's default language.
+		//
+
+		inline
 		void
 		SetCExoLocString(
 			__in const char * FieldName,
